@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Enlaces | Juan Martín Barrientos Lorusso (Canvas)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Evita el scroll */
+            font-family: 'Poppins', sans-serif;
+            background-color: #000;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+
+        .background-image {
+            position: absolute;
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
+            background-image: url('https://raw.githubusercontent.com/juone0450/roblox2/main/juanypilichat.png');
+            background-size: cover;
+            background-position: center center;
+            animation: kenburns 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes kenburns {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+            100% {
+                transform: scale(1.1) translate(-2%, 2%);
+            }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="background-image"></div>
+    </div>
+    <div class="overlay"></div>
+    <canvas id="linktreeCanvas"></canvas>
+
+    <script>
+        // --- Setup ---
+        const canvas = document.getElementById('linktreeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, centerX, centerY;
+        
+        const profilePic = new Image();
+        // URL de la imagen de perfil actualizada
+        profilePic.src = 'https://raw.githubusercontent.com/juone0450/roblox2/main/Juan.jpg';
+
+        const mouse = { x: undefined, y: undefined };
+
+        // --- Data for Links ---
+        const links = [
+            { label: 'YouTube', url: 'https://www.youtube.com/@JuanMartinBarrientosLorusso', icon: drawYoutubeIcon },
+            { label: 'TikTok', url: 'https://www.tiktok.com/@jmartinbarrientos', icon: drawTiktokIcon },
+            { label: 'GitHub', url: 'https://github.com/juone0450', icon: drawGithubIcon },
+            { label: 'LinkedIn', url: 'https://www.linkedin.com/in/juanmartinbarrientoslorusso/', icon: drawLinkedinIcon },
+            { label: 'Mi CV', url: 'https://juone0450.github.io/porfolio02/', icon: drawCvIcon }
+        ];
+
+        // --- Utility Functions ---
+        function setCanvasSize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+            // Update button positions on resize
+            calculateButtonLayout();
+        }
+
+        function calculateButtonLayout() {
+            const buttonHeight = 55;
+            const buttonWidth = Math.min(width * 0.8, 400);
+            const gap = 20;
+            const totalHeight = (links.length * (buttonHeight + gap)) - gap;
+            let startY = centerY - totalHeight / 2 + 60; // Start lower to make space for profile pic
+
+            links.forEach((link, index) => {
+                link.x = centerX - buttonWidth / 2;
+                link.y = startY + index * (buttonHeight + gap);
+                link.width = buttonWidth;
+                link.height = buttonHeight;
+                link.isHovered = false;
+            });
+        }
+        
+        function drawRoundedRect(x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        // --- Icon Drawing Functions ---
+        // Each icon is drawn using native canvas path commands
+        function drawYoutubeIcon(x, y, size) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.rect(x - size/2, y - size*0.7/2, size, size * 0.7);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.15, y - size * 0.2);
+            ctx.lineTo(x + size * 0.15, y);
+            ctx.lineTo(x - size * 0.15, y + size * 0.2);
+            ctx.closePath();
+            ctx.fillStyle = 'white';
+            ctx.fill();
+        }
+
+        function drawTiktokIcon(x, y, size) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.25, y - size * 0.4);
+            ctx.arc(x, y - size*0.4, size*0.25, 0, Math.PI, true);
+            ctx.lineTo(x - size * 0.25, y + size * 0.1);
+            ctx.arc(x + size * 0.1, y + size * 0.1, size*0.35, Math.PI, Math.PI/2, true);
+            ctx.stroke();
+        }
+
+        function drawGithubIcon(x, y, size) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, size/2, Math.PI * 0.8, Math.PI * 0.2, true);
+            ctx.moveTo(x - size * 0.45, y - size * 0.22);
+            ctx.bezierCurveTo(x - size*0.2, y + size*0.4, x + size*0.2, y + size*0.4, x + size * 0.45, y - size * 0.22);
+            ctx.stroke();
+             ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x - size*0.2, y-size*0.1, size*0.08, 0, Math.PI*2);
+            ctx.fill();
+        }
+        
+        function drawLinkedinIcon(x, y, size) {
+             ctx.strokeStyle = 'white';
+             ctx.lineWidth = 2;
+             drawRoundedRect(x - size/2, y - size/2, size, size, 4);
+             ctx.stroke();
+             ctx.beginPath();
+             ctx.moveTo(x - size * 0.2, y - size*0.1);
+             ctx.lineTo(x - size * 0.2, y + size * 0.25);
+             ctx.stroke();
+             ctx.beginPath();
+             ctx.arc(x - size * 0.2, y - size*0.25, size*0.1, 0, Math.PI*2);
+             ctx.stroke();
+             ctx.beginPath();
+             ctx.moveTo(x, y + size*0.25);
+             ctx.lineTo(x, y - size*0.05);
+             ctx.arc(x+size*0.15, y-size*0.05, size*0.18, Math.PI, 0, false);
+             ctx.lineTo(x+size*0.33, y+size*0.25);
+             ctx.stroke();
+        }
+
+        function drawCvIcon(x, y, size) {
+             ctx.strokeStyle = 'white';
+             ctx.lineWidth = 2;
+             ctx.beginPath();
+             ctx.moveTo(x-size*0.3, y - size/2);
+             ctx.lineTo(x - size*0.4, y - size/2);
+             ctx.arcTo(x-size/2, y-size/2, x-size/2, y+size/2, 4);
+             ctx.arcTo(x-size/2, y+size/2, x+size/2, y+size/2, 4);
+             ctx.arcTo(x+size/2, y+size/2, x+size/2, y-size/2, 4);
+             ctx.arcTo(x+size/2, y-size/2, x-size*0.3, y-size/2, 4);
+             ctx.lineTo(x-size*0.3, y-size*0.3);
+             ctx.closePath();
+             ctx.stroke();
+             ctx.beginPath();
+             ctx.moveTo(x - size*0.25, y - 0.1*size);
+             ctx.lineTo(x + size*0.25, y - 0.1*size);
+             ctx.moveTo(x - size*0.25, y + 0.15*size);
+             ctx.lineTo(x + size*0.25, y + 0.15*size);
+             ctx.stroke();
+        }
+
+
+        // --- Main Draw Loop ---
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // --- Draw Profile Picture ---
+            const picSize = 100;
+            const picY = centerY - (links.length * 65) / 2 - 100;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, picY + picSize / 2, picSize / 2, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(profilePic, centerX - picSize / 2, picY, picSize, picSize);
+            ctx.restore();
+            
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(centerX, picY + picSize / 2, picSize / 2, 0, Math.PI * 2, true);
+            ctx.stroke();
+
+            // --- Draw Title ---
+            ctx.fillStyle = 'white';
+            ctx.font = '600 24px Poppins';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText('@jmartinbarrientos', centerX, picY + picSize + 25);
+            ctx.shadowColor = 'transparent'; // Reset shadow
+
+
+            // --- Draw Buttons ---
+            links.forEach(link => {
+                // Background
+                ctx.fillStyle = link.isHovered ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.lineWidth = 1;
+                drawRoundedRect(link.x, link.y, link.width, link.height, 12);
+                ctx.fill();
+                ctx.stroke();
+
+                // Icon
+                link.icon(link.x + 30, link.y + link.height / 2, 24);
+
+                // Text
+                ctx.fillStyle = 'white';
+                ctx.font = '400 18px Poppins';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(link.label, link.x + link.width / 2, link.y + link.height / 2);
+            });
+
+            // --- Draw Footer ---
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = '300 14px Poppins';
+            ctx.fillText('Diseñado con ❤️', centerX, height - 30);
+        }
+        
+        // --- Animation Loop ---
+        function animate() {
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('resize', setCanvasSize);
+        
+        canvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            
+            let isOverAnyButton = false;
+            links.forEach(link => {
+                if (mouse.x >= link.x && mouse.x <= link.x + link.width &&
+                    mouse.y >= link.y && mouse.y <= link.y + link.height) {
+                    link.isHovered = true;
+                    isOverAnyButton = true;
+                } else {
+                    link.isHovered = false;
+                }
+            });
+            
+            canvas.style.cursor = isOverAnyButton ? 'pointer' : 'default';
+        });
+
+        canvas.addEventListener('click', (e) => {
+            links.forEach(link => {
+                if (link.isHovered) {
+                    window.open(link.url, '_blank');
+                }
+            });
+        });
+
+        // --- Initialization ---
+        profilePic.onload = () => {
+            setCanvasSize();
+            animate();
+        };
+        // Fallback if image fails to load
+        profilePic.onerror = () => {
+             console.error("Profile picture failed to load.");
+             setCanvasSize();
+             animate();
+        }
+
+    </script>
+</body>
+</html>
